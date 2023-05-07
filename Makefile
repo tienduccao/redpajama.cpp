@@ -221,6 +221,19 @@ embedding: examples/embedding/embedding.cpp build-info.h ggml.o llama.o common.o
 save-load-state: examples/save-load-state/save-load-state.cpp build-info.h ggml.o llama.o common.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(filter-out %.h,$^) -o $@ $(LDFLAGS)
 
+
+gptneox.o: examples/redpajama/gptneox.cpp ggml.h examples/redpajama/gptneox.h examples/redpajama/gptneox-util.h
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+common-gptneox.o: examples/redpajama/common-gptneox.cpp examples/redpajama/common-gptneox.h
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+redpajama: examples/redpajama/main-redpajama.cpp ggml.o gptneox.o common-gptneox.o $(OBJS)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
+	@echo
+	@echo '====  Run ./redpajama -h for help.  ===='
+	@echo
+
 build-info.h: $(wildcard .git/index) scripts/build-info.sh
 	@sh scripts/build-info.sh > $@.tmp
 	@if ! cmp -s $@.tmp $@; then \

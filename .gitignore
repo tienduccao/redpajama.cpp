@@ -32,6 +32,8 @@ models/*
 /benchmark-matmult
 /vdot
 /Pipfile
+/redpajama
+/core
 
 build-info.h
 arm_neon.h
@@ -45,3 +47,4 @@ zig-cache/
 ppl-*.txt
 
 examples/jeopardy/results.txt
+llama.dot
