@@ -47,7 +47,7 @@ void sigint_handler(int signo) {
 
 int main(int argc, char ** argv) {
     gpt_params params;
-    params.model = "models/oasst/ggml-oasst-sft-4-pythia-12b-epoch-3.5-q4_0.bin";
+    params.model = "./examples/redpajama/models/pythia/ggml-RedPajama-INCITE-Chat-3B-v1-f16.bin";
     
     if (gpt_params_parse(argc, argv, params) == false) {
         return 1;
@@ -152,8 +152,7 @@ int main(int argc, char ** argv) {
         return 0;
     }
 
-    
-    // Always interactive in Open-Assistant
+    // Always interactive for RedPajama chat model
     params.interactive = true;
     
     if (params.interactive) {
@@ -255,7 +254,7 @@ int main(int argc, char ** argv) {
             continue; // Restart loop for input
         }
         
-        // Tokenize prompt with oasst special tokens
+        // Tokenize prompt with RedPajama special tokens
 
         auto prompt_embd = ::gptneox_tokenize(ctx, buffer, false);
         auto embd_inp = std::vector<gptneox_token>();
@@ -268,6 +267,7 @@ int main(int argc, char ** argv) {
         embd_inp.insert(embd_inp.end(), prompt_embd.begin(), prompt_embd.end());
 
         // Redpajama: insert special tokens for OA. (postfix)
+        embd_inp.push_back(gptneox_str_to_token(ctx, "\n"));
         embd_inp.push_back(gptneox_str_to_token(ctx, "<"));
         embd_inp.push_back(gptneox_str_to_token(ctx, "bot"));
         embd_inp.push_back(gptneox_str_to_token(ctx, ">:"));

@@ -1,11 +1,4 @@
 # Convert Hugging Face fine-tuned gpt-neox-like models to ggml format
-#
-# Usage:
-#
-#   python3 models/convert-h5-to-ggml.py
-#
-# This script is similar to "convert-pt-to-ggml.py"
-#
 
 import io
 import os
@@ -67,7 +60,7 @@ if len(sys.argv) > 3:
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 print("Loading model: ", model_name)
 model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16 if ftype == 1 else torch.float32, 
-                                             cache_dir=model_cache_dir, use_auth_token=True)
+                                             cache_dir=model_cache_dir)
 model.eval()
 for p in model.parameters():
     p.requires_grad = False
