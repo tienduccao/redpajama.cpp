@@ -18,3 +18,4 @@ cd ../../..
         --repeat_last_n 3 \
         --repeat_penalty 1.1 \
         --seed 0
+        --temp 0.7
