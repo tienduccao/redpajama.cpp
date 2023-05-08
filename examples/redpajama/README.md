@@ -15,7 +15,20 @@ We highly appreciate the great effort from the fork of [gptneox.cpp](https://git
 
         bash ./examples/redpajama/scripts/install-RedPajama-INCITE-Chat-3B-v1.sh
 
-- Run RedPajama open assistant:
+- Run RedPajama chat model:
 
-        bash ./examples/redpajama/scripts/chat-RedPajama-INCITE-Chat-3B-v1-f16.sh
+```
+./redpajama -m ./examples/redpajama/models/pythia/ggml-RedPajama-INCITE-Chat-3B-v1-f16.bin \
+        -c 2048 \
+        -b 128 \
+        -n 1 \
+        -t 8 \
+        --top_k 50 \
+        --temp 0.7 \
+        --repeat_last_n 3 \
+        --repeat_penalty 1.1 \
+        --instruct \
+        --color \
+        --seed 0
+```
 
