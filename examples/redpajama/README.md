@@ -33,6 +33,12 @@ We highly appreciate the great effort from the fork of [gptneox.cpp](https://git
         --repeat_penalty 1.1 \
         --seed 0
 
+    Note that you may need to install torch and transformers to run the above scripts, e.g.:
+        
+        pip install torch==2.0.0
+        pip install transformers==4.28.1
+
+
 - Run RedPajama chat model (q4_0):
 
         ./redpajama-chat -m ./examples/redpajama/models/pythia/ggml-RedPajama-INCITE-Chat-3B-v1-q4_0.bin \
