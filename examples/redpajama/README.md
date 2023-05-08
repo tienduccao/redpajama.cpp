@@ -32,3 +32,20 @@ We highly appreciate the great effort from the fork of [gptneox.cpp](https://git
         --seed 0
 ```
 
+## Attribution
+
+The following files are covered by a MIT license and were taken from:
+
+https://github.com/byroneverson/gptneox.cpp
+
+Thank you Byron.
+
+```
+common-gptneox.cpp	
+copy-gptneox.cpp	
+gptneox.cpp		
+quantize-gptneox.cpp
+common-gptneox.h	
+gptneox-util.h		
+gptneox.h
+```
