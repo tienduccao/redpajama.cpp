@@ -14,7 +14,7 @@ cd ../../..
         -t 8 \
         --instruct \
         --color \
-        --top_k 1 \
+        --top_k 50 \
         --repeat_last_n 3 \
         --repeat_penalty 1.1 \
         --seed 0
