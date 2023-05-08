@@ -1,18 +1,13 @@
-#include "common.h"
+#include "common-gptneox.h"
 
 #include <cassert>
-#include <iostream>
 #include <cstring>
 #include <fstream>
 #include <string>
 #include <iterator>
 #include <algorithm>
 #include <sstream>
-
-#if defined(__APPLE__) && defined(__MACH__)
-#include <sys/types.h>
-#include <sys/sysctl.h>
-#endif
+#include <iostream>
 
 #if defined (_WIN32)
 #include <fcntl.h>
@@ -30,69 +25,20 @@ extern "C" __declspec(dllimport) int __stdcall WideCharToMultiByte(unsigned int 
 #define CP_UTF8 65001
 #endif
 
-int32_t get_num_physical_cores() {
+bool gpt_params_parse(int argc, char ** argv, gpt_params & params) {
+    // determine sensible default number of threads.
+    // std::thread::hardware_concurrency may not be equal to the number of cores, or may return 0.
 #ifdef __linux__
     std::ifstream cpuinfo("/proc/cpuinfo");
-    std::string line;
-    while (std::getline(cpuinfo, line)) {
-        std::size_t pos = line.find("cpu cores");
-        if (pos != std::string::npos) {
-            pos = line.find(": ", pos);
-            if (pos != std::string::npos) {
-                try {
-                    // Extract the number and return it
-                    return static_cast<int32_t>(std::stoul(line.substr(pos + 2)));
-                } catch (const std::invalid_argument &) {
-                    // Ignore if we could not parse
-                }
-            }
-        }
-    }
-#elif defined(__APPLE__) && defined(__MACH__)
-    int32_t num_physical_cores;
-    size_t len = sizeof(num_physical_cores);
-    int result = sysctlbyname("hw.perflevel0.physicalcpu", &num_physical_cores, &len, NULL, 0);
-    if (result == 0) {
-        return num_physical_cores;
-    }
-    result = sysctlbyname("hw.physicalcpu", &num_physical_cores, &len, NULL, 0);
-    if (result == 0) {
-        return num_physical_cores;
-    }
-#elif defined(_WIN32)
-    //TODO: Implement
+    params.n_threads = std::count(std::istream_iterator<std::string>(cpuinfo),
+                                  std::istream_iterator<std::string>(),
+                                  std::string("processor"));
 #endif
-    unsigned int n_threads = std::thread::hardware_concurrency();
-    return n_threads > 0 ? (n_threads <= 4 ? n_threads : n_threads / 2) : 4;
-}
-
-void process_escapes(std::string& input) {
-    std::size_t input_len = input.length();
-    std::size_t output_idx = 0;
-
-    for (std::size_t input_idx = 0; input_idx < input_len; ++input_idx) {
-        if (input[input_idx] == '\\' && input_idx + 1 < input_len) {
-            switch (input[++input_idx]) {
-                case 'n':  input[output_idx++] = '\n'; break;
-                case 'r':  input[output_idx++] = '\r'; break;
-                case 't':  input[output_idx++] = '\t'; break;
-                case '\'': input[output_idx++] = '\''; break;
-                case '\"': input[output_idx++] = '\"'; break;
-                case '\\': input[output_idx++] = '\\'; break;
-                default:   input[output_idx++] = '\\';
-                           input[output_idx++] = input[input_idx]; break;
-            }
-        } else {
-            input[output_idx++] = input[input_idx];
-        }
+    if (params.n_threads == 0) {
+        params.n_threads = std::max(1, (int32_t) std::thread::hardware_concurrency());
     }
 
-    input.resize(output_idx);
-}
-
-bool gpt_params_parse(int argc, char ** argv, gpt_params & params) {
     bool invalid_param = false;
-    bool escape_prompt = false;
     std::string arg;
     gpt_params default_params;
 
@@ -100,9 +46,6 @@ bool gpt_params_parse(int argc, char ** argv, gpt_params & params) {
         arg = argv[i];
 
         if (arg == "-s" || arg == "--seed") {
-#if defined(GGML_USE_CUBLAS)
-            fprintf(stderr, "WARNING: when using cuBLAS generation results are NOT guaranteed to be reproducible.\n");
-#endif
             if (++i >= argc) {
                 invalid_param = true;
                 break;
@@ -120,8 +63,6 @@ bool gpt_params_parse(int argc, char ** argv, gpt_params & params) {
                 break;
             }
             params.prompt = argv[i];
-        } else if (arg == "-e") {
-            escape_prompt = true;
         } else if (arg == "--session") {
             if (++i >= argc) {
                 invalid_param = true;
@@ -288,7 +229,7 @@ bool gpt_params_parse(int argc, char ** argv, gpt_params & params) {
         } else if (arg == "--perplexity") {
             params.perplexity = true;
         } else if (arg == "--ignore-eos") {
-            params.logit_bias[llama_token_eos()] = -INFINITY;
+            params.logit_bias[gptneox_token_eos()] = -INFINITY;
         } else if (arg == "--no-penalize-nl") {
             params.penalize_nl = false;
         } else if (arg == "-l" || arg == "--logit-bias") {
@@ -297,7 +238,7 @@ bool gpt_params_parse(int argc, char ** argv, gpt_params & params) {
                 break;
             }
             std::stringstream ss(argv[i]);
-            llama_token key;
+            gptneox_token key;
             char sign;
             std::string value_str;
             try {
@@ -327,12 +268,6 @@ bool gpt_params_parse(int argc, char ** argv, gpt_params & params) {
                 break;
             }
             params.input_prefix = argv[i];
-        } else if (arg == "--in-suffix") {
-            if (++i >= argc) {
-                invalid_param = true;
-                break;
-            }
-            params.input_suffix = argv[i];
         } else {
             fprintf(stderr, "error: unknown argument: %s\n", arg.c_str());
             gpt_print_usage(argc, argv, default_params);
@@ -343,9 +278,6 @@ bool gpt_params_parse(int argc, char ** argv, gpt_params & params) {
         fprintf(stderr, "error: invalid parameter for argument: %s\n", arg.c_str());
         gpt_print_usage(argc, argv, default_params);
         exit(1);
-    }
-    if (escape_prompt) {
-        process_escapes(params.prompt);
     }
 
     return true;
@@ -358,20 +290,18 @@ void gpt_print_usage(int /*argc*/, char ** argv, const gpt_params & params) {
     fprintf(stderr, "  -h, --help            show this help message and exit\n");
     fprintf(stderr, "  -i, --interactive     run in interactive mode\n");
     fprintf(stderr, "  --interactive-first   run in interactive mode and wait for input right away\n");
-    fprintf(stderr, "  -ins, --instruct      run in instruction mode (use with Alpaca models)\n");
+    fprintf(stderr, "  -ins, --instruct      run in instruction mode\n");
     fprintf(stderr, "  -r PROMPT, --reverse-prompt PROMPT\n");
     fprintf(stderr, "                        run in interactive mode and poll user input upon seeing PROMPT (can be\n");
     fprintf(stderr, "                        specified more than once for multiple prompts).\n");
     fprintf(stderr, "  --color               colorise output to distinguish prompt and user input from generations\n");
-    fprintf(stderr, "  -s SEED, --seed SEED  RNG seed (default: -1, use random seed for < 0)\n");
+    fprintf(stderr, "  -s SEED, --seed SEED  RNG seed (default: -1, use random seed for <= 0)\n");
     fprintf(stderr, "  -t N, --threads N     number of threads to use during computation (default: %d)\n", params.n_threads);
     fprintf(stderr, "  -p PROMPT, --prompt PROMPT\n");
     fprintf(stderr, "                        prompt to start generation with (default: empty)\n");
-    fprintf(stderr, "  -e                    process prompt escapes sequences (\\n, \\r, \\t, \\', \\\", \\\\)\n");
     fprintf(stderr, "  --session FNAME       file to cache model state in (may be large!) (default: none)\n");
     fprintf(stderr, "  --random-prompt       start with a randomized prompt.\n");
     fprintf(stderr, "  --in-prefix STRING    string to prefix user inputs with (default: empty)\n");
-    fprintf(stderr, "  --in-suffix STRING    string to suffix after user inputs with (default: empty)\n");
     fprintf(stderr, "  -f FNAME, --file FNAME\n");
     fprintf(stderr, "                        prompt file to start generation.\n");
     fprintf(stderr, "  -n N, --n_predict N   number of tokens to predict (default: %d, -1 = infinity)\n", params.n_predict);
@@ -401,10 +331,10 @@ void gpt_print_usage(int /*argc*/, char ** argv, const gpt_params & params) {
     fprintf(stderr, "  -b N, --batch_size N  batch size for prompt processing (default: %d)\n", params.n_batch);
     fprintf(stderr, "  --perplexity          compute perplexity over the prompt\n");
     fprintf(stderr, "  --keep                number of tokens to keep from the initial prompt (default: %d, -1 = all)\n", params.n_keep);
-    if (llama_mlock_supported()) {
+    if (gptneox_mlock_supported()) {
         fprintf(stderr, "  --mlock               force system to keep model in RAM rather than swapping or compressing\n");
     }
-    if (llama_mmap_supported()) {
+    if (gptneox_mmap_supported()) {
         fprintf(stderr, "  --no-mmap             do not memory-map model (slower load but may reduce pageouts if not using mlock)\n");
     }
     fprintf(stderr, "  --mtest               compute maximum memory usage\n");
@@ -436,47 +366,14 @@ std::string gpt_random_prompt(std::mt19937 & rng) {
 }
 
 // TODO: not great allocating this every time
-std::vector<llama_token> llama_tokenize(struct llama_context * ctx, const std::string & text, bool add_bos) {
+std::vector<gptneox_token> gptneox_tokenize(struct gptneox_context * ctx, const std::string & text, bool add_bos) {
     // initialize to prompt numer of chars, since n_tokens <= n_prompt_chars
-    std::vector<llama_token> res(text.size() + (int)add_bos);
-    int n = llama_tokenize(ctx, text.c_str(), res.data(), res.size(), add_bos);
+    std::vector<gptneox_token> res(text.size() + (int)add_bos);
+    int n = gptneox_tokenize(ctx, text.c_str(), res.data(), res.size(), add_bos);
     assert(n >= 0);
     res.resize(n);
 
     return res;
-}
-
-struct llama_context * llama_init_from_gpt_params(const gpt_params & params) {
-    auto lparams = llama_context_default_params();
-
-    lparams.n_ctx      = params.n_ctx;
-    lparams.n_parts    = params.n_parts;
-    lparams.seed       = params.seed;
-    lparams.f16_kv     = params.memory_f16;
-    lparams.use_mmap   = params.use_mmap;
-    lparams.use_mlock  = params.use_mlock;
-    lparams.logits_all = params.perplexity;
-    lparams.embedding  = params.embedding;
-
-    llama_context * lctx = llama_init_from_file(params.model.c_str(), lparams);
-
-    if (lctx == NULL) {
-        fprintf(stderr, "%s: error: failed to load model '%s'\n", __func__, params.model.c_str());
-        return NULL;
-    }
-
-    if (!params.lora_adapter.empty()) {
-        int err = llama_apply_lora_from_file(lctx,
-                                             params.lora_adapter.c_str(),
-                                             params.lora_base.empty() ? NULL : params.lora_base.c_str(),
-                                             params.n_threads);
-        if (err != 0) {
-            fprintf(stderr, "%s: error: failed to apply lora adapter\n", __func__);
-            return NULL;
-        }
-    }
-
-    return lctx;
 }
 
 /* Keep track of current color of output, and emit ANSI code if it changes. */
