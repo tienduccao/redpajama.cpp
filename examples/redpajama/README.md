@@ -97,7 +97,7 @@ We highly appreciate the great effort from the fork of [gptneox.cpp](https://git
 
         # Or 
 
-        bash ./examples/redpajama/scripts/install-RedPajama-INCITE-Base-3B-v1.sh
+        bash ./examples/redpajama/scripts/install-RedPajama-INCITE-Instruct-3B-v1.sh
 
 - Run other quantize version of RedPajama Base/Instruct model (Make sure you get the f16 model prepared before you run this):
 
