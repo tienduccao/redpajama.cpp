@@ -7,14 +7,14 @@
 
 Inference of [LLaMA](https://arxiv.org/abs/2302.13971) model in pure C/C++
 
-## RedPajama Support
-
-For RedPajama Models, see [this example](https://github.com/togethercomputer/redpajama.cpp/tree/master/examples/redpajama).
-
 **Hot topics:**
 
 - [Roadmap May 2023](https://github.com/ggerganov/llama.cpp/discussions/1220)
 - [New quantization methods](https://github.com/ggerganov/llama.cpp#quantization)
+
+## RedPajama Support
+
+For RedPajama Models, see [this example](https://github.com/togethercomputer/redpajama.cpp/tree/master/examples/redpajama).
 
 ## Description
 
