@@ -72,3 +72,23 @@ We highly appreciate the great effort from the fork of [gptneox.cpp](https://git
         --repeat_last_n 3 \
         --repeat_penalty 1.1 \
         --seed 0
+
+## Attribution
+
+The following files are covered by a MIT license and were taken from:
+
+https://github.com/byroneverson/gptneox.cpp
+
+Thank you Byron.
+
+```
+common-gptneox.cpp	
+copy-gptneox.cpp	
+gptneox.cpp		
+quantize-gptneox.cpp
+common-gptneox.h	
+gptneox-util.h		
+gptneox.h
+convert_gptneox_to_ggml.py
+quantize-gptneox.py
+```
