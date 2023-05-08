@@ -281,14 +281,6 @@ int main(int argc, char ** argv) {
             for (int i = 0; i < (int) embd_inp.size(); i++) {
                 fprintf(stderr, "%6d -> '%s'\n", embd_inp[i], gptneox_token_to_str(ctx, embd_inp[i]));
             }
-            /*if (params.n_keep > 0) {
-            fprintf(stderr, "%s: static prompt based on n_keep: '", __func__);
-                for (int i = 0; i < params.n_keep; i++) {
-                    fprintf(stderr, "%s", gptneox_token_to_str(ctx, embd_inp[i]));
-                }
-                fprintf(stderr, "'\n");
-            }
-             */
             fprintf(stderr, "\n");
         }
         

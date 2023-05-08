@@ -49,6 +49,13 @@ def main():
         help='Specify the path to the "quantize" script.'
     )
 
+    parser.add_argument(
+        '--quantize-output-type', dest='quantize_output_type', type=str,
+        default='q4_0',
+        help='Specify the path to the "quantize" script.'
+    )
+
+
     # TODO: Revise this code
     # parser.add_argument(
     #     '-t', '--threads', dest='threads', type='int',
@@ -90,14 +97,14 @@ def main():
         if not os.path.isfile(f16_model_part_path):
             print(
                 f"The f16 model {os.path.basename(f16_model_part_path)} "
-                f"was not found in {args.models_path}{os.path.sep}{model}"
+                f"was not found in {args.models_path}{os.path.sep}"
                 ". If you want to use it from another location, set the "
                 "--models-path argument from the command line."
             )
             sys.exit(1)
 
         __run_quantize_script(
-            args.quantize_script_path, f16_model_part_path
+            args.quantize_script_path, f16_model_part_path, args.quantize_output_type
         )
 
         if args.remove_f16:
@@ -107,14 +114,14 @@ def main():
 # This was extracted to a top-level function for parallelization, if
 # implemented. See https://github.com/ggerganov/llama.cpp/pull/222/commits/f8db3d6cd91bf1a1342db9d29e3092bc12dd783c#r1140496406
 
-def __run_quantize_script(script_path, f16_model_part_path):
+def __run_quantize_script(script_path, f16_model_part_path, quantize_output_type):
     """Run the quantize script specifying the path to it and the path to the
     f16 model to quantize.
     """
 
-    new_quantized_model_path = f16_model_part_path.replace("f16", "q4_0")
+    new_quantized_model_path = f16_model_part_path.replace("f16", quantize_output_type)
     subprocess.run(
-        [script_path, f16_model_part_path, new_quantized_model_path, "2"],
+        [script_path, f16_model_part_path, new_quantized_model_path, quantize_output_type],
         check=True
     )
 

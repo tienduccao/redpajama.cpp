@@ -38,7 +38,7 @@ struct gpt_params {
     float   mirostat_tau      = 5.00f; // target entropy
     float   mirostat_eta      = 0.10f; // learning rate
 
-    std::string model  = "models/lamma-7B/ggml-model.bin"; // model path
+    std::string model  = "./examples/redpajama/models/pythia/ggml-RedPajama-INCITE-Chat-3B-v1-f16.bin"; // model path
     std::string prompt = "";
     std::string path_session = "";       // path to file for saving/loading model eval state
     std::string input_prefix = "";       // string to prefix user inputs with
@@ -55,7 +55,7 @@ struct gpt_params {
     bool embedding         = false; // get only sentence embedding
     bool interactive_first = false; // wait for user input immediately
 
-    bool instruct          = false; // instruction mode (used for Alpaca models)
+    bool instruct          = false; // instruction mode
     bool penalize_nl       = true;  // consider newlines as a repeatable token
     bool perplexity        = false; // compute perplexity over the prompt
     bool use_mmap          = true;  // use mmap for faster loads

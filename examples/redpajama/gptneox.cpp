@@ -34,9 +34,7 @@
 #define GPTNEOX_USE_SCRATCH
 #define GPTNEOX_MAX_SCRATCH_BUFFERS 16
 
-// available open-assistant based gptneox models
-// OpenAssistant/stablelm-7b-sft-v7-epoch-3
-// OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5
+
 enum e_model {
     MODEL_UNKNOWN,
     MODEL_3B, // StabilityAI Base Alpha 3B
