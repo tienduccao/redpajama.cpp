@@ -237,6 +237,12 @@ redpajama: examples/redpajama/main-redpajama.cpp ggml.o gptneox.o common-gptneox
 	@echo '====  Run ./redpajama -h for help.  ===='
 	@echo
 
+redpajama-chat: examples/redpajama/main-redpajama-chat.cpp ggml.o gptneox.o common-gptneox.o $(OBJS)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
+	@echo
+	@echo '====  Run ./redpajama-chat -h for help.  ===='
+	@echo
+
 build-info.h: $(wildcard .git/index) scripts/build-info.sh
 	@sh scripts/build-info.sh > $@.tmp
 	@if ! cmp -s $@.tmp $@; then \

@@ -38,7 +38,7 @@ struct gpt_params {
     float   mirostat_tau      = 5.00f; // target entropy
     float   mirostat_eta      = 0.10f; // learning rate
 
-    std::string model  = "./examples/redpajama/models/pythia/ggml-RedPajama-INCITE-Chat-3B-v1-f16.bin"; // model path
+    std::string model  = "./examples/redpajama/models/pythia/ggml-RedPajama-INCITE-Chat/Instruct-3B-v1-f16.bin"; // model path
     std::string prompt = "";
     std::string path_session = "";       // path to file for saving/loading model eval state
     std::string input_prefix = "";       // string to prefix user inputs with

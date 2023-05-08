@@ -32,6 +32,7 @@ models/*
 /benchmark-matmult
 /vdot
 /Pipfile
+/redpajama-chat
 /redpajama
 /core
 /quantize-gptneox
